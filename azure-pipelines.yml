@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - main  # or master
+      - main
 
 pool:
   name: 'Default'
@@ -15,25 +15,34 @@ steps:
     packageType: 'sdk'
     version: '8.x.x'
 
-- task: Restore@2
+- task: DotNetCoreCLI@2
   displayName: 'Restore NuGet packages'
   inputs:
-    restoreSolution: '**/*.sln'
+    command: 'restore'
+    projects: '**/*.sln'
 
-- task: Build@1
+- task: DotNetCoreCLI@2
   displayName: 'Build solution'
   inputs:
-    solution: '**/*.sln'
+    command: 'build'
+    projects: '**/*.sln'
     clean: true
-    restore: true
-    buildPlatform: 'Any CPU'
-    buildConfiguration: 'Release'
+    restore: true 
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish solution'
+  inputs:
+    command: 'publish'
+    projects: '**/*.sln'
+    publishWebProjects: false
+    configuration: 'Release'
+    output: '$(Build.ArtifactStagingDirectory)'
 
 - task: NuGetCommand@2
   displayName: 'Pack NuGet package'
   inputs:
     command: 'pack'
-    packagesToPack: '**/*.csproj'
+    packagesToPack: '**/*.csproj' 
     versioningScheme: 'off'
     outputDir: '$(Build.ArtifactStagingDirectory)'
 
@@ -44,4 +53,3 @@ steps:
     publishVstsFeed: 'COMP367Lab4JAguilar'
     packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
     allowPackageConflicts: true
-
