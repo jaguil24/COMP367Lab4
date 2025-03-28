@@ -4,7 +4,7 @@ trigger:
       - main
 
 pool:
-  name: 'Default'
+  name: 'SelfHostedAgentPool'
   demands:
     - agent.os -equals Windows_NT
 
@@ -27,7 +27,7 @@ steps:
     command: 'build'
     projects: '**/*.sln'
     clean: true
-    restore: true 
+    restore: true
 
 - task: DotNetCoreCLI@2
   displayName: 'Publish solution'
