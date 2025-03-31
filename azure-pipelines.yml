@@ -1,18 +1,18 @@
 trigger:
   branches:
     include:
-      - main  # Trigger the pipeline on commits to the 'main' branch
+      - main
 
 pool:
-  name: 'Default'  # This is the pool for the self-hosted agent
+  name: 'Default'
   demands:
-    - agent.name -equals your-self-hosted-agent-name  # Replace with your agent name
+    - Jay Aguilar
 
 steps:
   - task: UseDotNet@2
     inputs:
       packageType: 'sdk'
-      version: '5.x'  # Update to the version of .NET you are using
+      version: '8.x'  
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
   - task: Restore@2
@@ -30,7 +30,6 @@ steps:
       arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
       zipAfterPublish: true
 
-# This will output the build artifact
 artifacts:
   - artifact: drop
     type: pipeline
