@@ -1,56 +1,38 @@
 trigger:
   branches:
     include:
-      - main
+      - main  # Trigger the pipeline on commits to the 'main' branch
 
 pool:
-  name: 'SelfHostedAgentPool'
+  name: 'Default'  # This is the pool for the self-hosted agent
   demands:
-    - agent.os -equals Windows_NT
+    - agent.name -equals your-self-hosted-agent-name  # Replace with your agent name
 
 steps:
-- task: UseDotNet@2
-  displayName: 'Use .NET 8 SDK'
-  inputs:
-    packageType: 'sdk'
-    version: '8.0.407'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '5.x'  # Update to the version of .NET you are using
+      installationPath: $(Agent.ToolsDirectory)/dotnet
 
-- task: DotNetCoreCLI@2
-  displayName: 'Restore NuGet packages'
-  inputs:
-    command: 'restore'
-    projects: '**/*.sln'
+  - task: Restore@2
+    inputs:
+      command: 'restore'
+      projects: '**/*.csproj'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Build solution'
-  inputs:
-    command: 'build'
-    projects: '**/*.sln'
-    clean: true
-    restore: true
+  - task: Build@1
+    inputs:
+      projects: '**/*.csproj'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Publish solution'
-  inputs:
-    command: 'publish'
-    projects: '**/*.sln'
-    publishWebProjects: false
-    configuration: 'Release'
-    output: '$(Build.ArtifactStagingDirectory)'
+  - task: Publish@1
+    inputs:
+      publishWebProjects: true
+      arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
+      zipAfterPublish: true
 
-- task: NuGetCommand@2
-  displayName: 'Pack NuGet package'
-  inputs:
-    command: 'pack'
-    packagesToPack: '**/*.csproj' 
-    versioningScheme: 'off'
-    outputDir: '$(Build.ArtifactStagingDirectory)'
-
-- task: NuGetCommand@2
-  displayName: 'Push NuGet package'
-  inputs:
-    command: 'push'
-    publishVstsFeed: 'COMP367Lab4JAguilar'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
-    allowPackageConflicts: true
+# This will output the build artifact
+artifacts:
+  - artifact: drop
+    type: pipeline
+    name: $(Build.DefinitionName)_$(Build.BuildId)
+    path: $(Build.ArtifactStagingDirectory)
