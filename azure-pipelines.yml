@@ -4,7 +4,7 @@ trigger:
       - main
 
 pool:
-  name: 'SelfHostedAgentPool'
+  name: 'Agent2'
   demands:
     - agent.os -equals Windows_NT
 
