@@ -4,34 +4,53 @@ trigger:
       - main
 
 pool:
-  name: 'Default'
+  name: 'SelfHostedAgentPool'
   demands:
-    - Jay Aguilar
+    - agent.os -equals Windows_NT
 
 steps:
-  - task: UseDotNet@2
-    inputs:
-      packageType: 'sdk'
-      version: '8.x'  
-      installationPath: $(Agent.ToolsDirectory)/dotnet
+- task: UseDotNet@2
+  displayName: 'Use .NET 8 SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.407'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  - task: Restore@2
-    inputs:
-      command: 'restore'
-      projects: '**/*.csproj'
+- task: DotNetCoreCLI@2
+  displayName: 'Restore NuGet packages'
+  inputs:
+    command: 'restore'
+    projects: '**/*.sln'
 
-  - task: Build@1
-    inputs:
-      projects: '**/*.csproj'
+- task: DotNetCoreCLI@2
+  displayName: 'Build solution'
+  inputs:
+    command: 'build'
+    projects: '**/*.sln'
+    clean: true
+    restore: true
 
-  - task: Publish@1
-    inputs:
-      publishWebProjects: true
-      arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
-      zipAfterPublish: true
+- task: DotNetCoreCLI@2
+  displayName: 'Publish solution'
+  inputs:
+    command: 'publish'
+    projects: '**/*.sln'
+    publishWebProjects: false
+    configuration: 'Release'
+    output: '$(Build.ArtifactStagingDirectory)'
 
-artifacts:
-  - artifact: drop
-    type: pipeline
-    name: $(Build.DefinitionName)_$(Build.BuildId)
-    path: $(Build.ArtifactStagingDirectory)
+- task: NuGetCommand@2
+  displayName: 'Pack NuGet package'
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj' 
+    versioningScheme: 'off'
+    outputDir: '$(Build.ArtifactStagingDirectory)'
+
+- task: NuGetCommand@2
+  displayName: 'Push NuGet package'
+  inputs:
+    command: 'push'
+    publishVstsFeed: 'COMP367Lab4JAguilar'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    allowPackageConflicts: true
